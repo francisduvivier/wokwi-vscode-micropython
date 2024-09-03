@@ -156,16 +156,24 @@ def main():
 
 def game_loop():
     if game_won:
-        fill(0, 255, 0)
+        game_won_loop()
         return
     if game_lost:
-        fill(255, 0, 0)
+        game_lost_loop()
         return
 
     draw_sparkles()
     update_block_position()
     draw_block()
     time.sleep(0.1)  # Add a small delay to prevent the loop from running too fast
+
+
+def game_lost_loop():
+    fill(255, 0, 0)
+
+
+def game_won_loop():
+    fill(0, 255, 0)
 
 
 def startup_sequence():
