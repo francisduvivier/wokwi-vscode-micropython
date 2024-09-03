@@ -15,14 +15,11 @@ import rgb
 # Setup RGB
 WIDTH, HEIGHT = 32, 19
 
-#Setup accel
-accel.init()
-
 
 # Game variables
 block_size = 1
 block_x, block_y = WIDTH // 2 - block_size//2 -1, HEIGHT // 2 - block_size//2
-sparkles = [[True for _ in range(WIDTH)] for _ in range(HEIGHT)]
+block_locations = [[False for _ in range(WIDTH)] for _ in range(HEIGHT)]
 
 def set_pixel(x, y, r, g, b):
     if 0 <= x < WIDTH and 0 <= y < HEIGHT:
@@ -38,8 +35,6 @@ def random_color(max=255):
     return (random.randint(0,max), random.randint(0,max), random.randint(0,max), 0xff)
 
 def write_kolab(text_color=(255, 000, 000, 0xff), random_background=False):
-    log("Writing KO-LAB...")
-
     message = """
 |IIIIIIIIIIIIIIIIIIIIIIIIIIIIII|
 |                              |
@@ -63,33 +58,37 @@ def write_kolab(text_color=(255, 000, 000, 0xff), random_background=False):
     # Update the data array based on the message
     for y, row in enumerate(message.split('\n')[1:]):  # Skip the first newline character
         for x, char in enumerate(row):
-            if char != ' ':
-                color = text_color  # Assign text color
-            elif char == ' ':
-                color = random_color(150) if random_background else (0,100,0,0xff)
+            index_in_img = (y) * img_width + (x)
+            global_y = y + y_start
+            global_x = x + x_start
+            if char == ' ':
+                if block_locations[global_y][global_x]:
+                    color = (0,0,0,255) # Turn off places where the block as been
+                else:
+                    color = random_color(150) if random_background else (0,100,0,0xff)
             else:
-                continue  # Other characters are also skipped (if any)
+                if block_locations[global_y][global_x]:
+                    color = (0,255,0,255)
+                else:
+                    color = text_color  # Assign text color
 
-            # Check if the position is within the screen dimensions
-            if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-                # Calculate the index in the linear data array
-                index = (y) * WIDTH + (x)
-                # Update the data array with the selected color
-                (r, g, b, alpha) = color
-                color_value = (r << 24) | (g << 16) | (b << 8) | alpha
-                data[index] = color_value
+            (r, g, b, alpha) = color
+            color_value = (r << 24) | (g << 16) | (b << 8) | alpha
+            data[index_in_img] = color_value
+
     rgb.image(data, pos=(x_start, y_start), size=(img_width, img_height))
 
 def draw_sparkles():
-    write_kolab((150,0,0, 0xff), True)
+    write_kolab((255,0,0, 0xff), True)
 
 def draw_block():
     for y in range(block_size):
         for x in range(block_size):
-            set_pixel(block_x + x, block_y + y, 0, 0, 255)  # Red color
+            set_pixel(block_x + x, block_y + y, 255, 255, 255)  # Red color
 
 def update_block_position():
     global block_x, block_y
+
     if accel:
         ax, ay, _ = accel.get_xyz()
         # Adjust sensitivity as needed
@@ -105,11 +104,14 @@ def update_block_position():
         # Update sparkles
         for y in range(block_size):
             for x in range(block_size):
-                sparkles[new_y + y][new_x + x] = False
+                if not block_locations[new_y + y][new_x + x]:
+                    print('marking block location: '+str(new_y + y)+', '+str(new_x + x))
+                    block_locations[new_y + y][new_x + x] = True
 
         block_x, block_y = new_x, new_y
 
 def main():
+    accel.init()
     log("[START] main()")
     startup_sequence()
     loop_count = 0
@@ -124,13 +126,14 @@ def game_loop_once():
     draw_sparkles()
     update_block_position()
     draw_block()
-    time.sleep(0.01)  # Add a small delay to prevent the loop from running too fast
+    time.sleep(0.1)  # Add a small delay to prevent the loop from running too fast
 
 
 def startup_sequence():
     fill(50, 100, 50)
     write_kolab()
     time.sleep(0.5)
+    draw_block()
 
 
 if __name__ == "__main__":
