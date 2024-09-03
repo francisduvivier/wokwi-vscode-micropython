@@ -1,38 +1,56 @@
-# Setup logging
 def log(message):
     print(message)
 
-log("Starting up...")
+
+log("Starting up main.py...")
 
 import random
 import time
-
 import accel
 import rgb
-
-
+import buttons
 
 # Setup RGB
 WIDTH, HEIGHT = 32, 19
 
-
 # Game variables
 block_size = 1
-block_x, block_y = WIDTH // 2 - block_size//2 -1, HEIGHT // 2 - block_size//2
+block_x, block_y = WIDTH // 2 - block_size // 2 - 1, HEIGHT // 2 - block_size // 2
 block_locations = [[False for _ in range(WIDTH)] for _ in range(HEIGHT)]
+game_won = False
+game_lost = False
+
+
+def reset():
+    global game_won
+    game_won = False
+    global game_lost
+    game_lost = False
+    global block_size
+    block_size = 1
+    global block_x
+    global block_y
+    block_x, block_y = WIDTH // 2 - block_size // 2 - 1, HEIGHT // 2 - block_size // 2
+    global block_locations
+    block_locations = [[False for _ in range(WIDTH)] for _ in range(HEIGHT)]
+    startup_sequence()
+
 
 def set_pixel(x, y, r, g, b):
     if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-        rgb.pixel((r, g, b),(x, y))
+        rgb.pixel((r, g, b), (x, y))
+
 
 def fill(r, g, b):
     rgb.background((r, g, b))
 
-def random_color(max=255):
-    if random.randint(0,5) != 0:
-        return (0,0,0,0)
 
-    return (random.randint(0,max), random.randint(0,max), random.randint(0,max), 0xff)
+def random_color(max=255):
+    if random.randint(0, 5) != 0:
+        return (0, 0, 0, 0)
+
+    return (random.randint(0, max), random.randint(0, max), random.randint(0, max), 0xff)
+
 
 def write_kolab(text_color=(255, 000, 000, 0xff), random_background=False):
     message = """
@@ -54,7 +72,8 @@ def write_kolab(text_color=(255, 000, 000, 0xff), random_background=False):
     img_height = len(message.split('\n')[1:])
     # Initialize the data array to store color values for each pixel
     data = [0] * (img_width * img_height)  # Initialize all pixels to black
-
+    found_unmasked_kolab_pixel = False
+    found_unmasked_sparkle_pixel = False
     # Update the data array based on the message
     for y, row in enumerate(message.split('\n')[1:]):  # Skip the first newline character
         for x, char in enumerate(row):
@@ -63,28 +82,37 @@ def write_kolab(text_color=(255, 000, 000, 0xff), random_background=False):
             global_x = x + x_start
             if char == ' ':
                 if block_locations[global_y][global_x]:
-                    color = (0,0,0,255) # Turn off places where the block as been
+                    color = (0, 0, 0, 255)  # Turn off places where the block as been
                 else:
-                    color = random_color(150) if random_background else (0,100,0,0xff)
+                    found_unmasked_sparkle_pixel = True
+                    color = random_color(150) if random_background else (0, 100, 0, 0xff)
             else:
                 if block_locations[global_y][global_x]:
-                    color = (0,255,0,255)
+                    color = (0, 255, 0, 255)
                 else:
+                    found_unmasked_kolab_pixel = True
                     color = text_color  # Assign text color
 
             (r, g, b, alpha) = color
             color_value = (r << 24) | (g << 16) | (b << 8) | alpha
             data[index_in_img] = color_value
+    if not found_unmasked_kolab_pixel:
+        game_won = True
+    if not found_unmasked_sparkle_pixel:
+        game_lost = True
 
     rgb.image(data, pos=(x_start, y_start), size=(img_width, img_height))
 
+
 def draw_sparkles():
-    write_kolab((255,0,0, 0xff), True)
+    write_kolab((255, 0, 0, 0xff), True)
+
 
 def draw_block():
     for y in range(block_size):
         for x in range(block_size):
             set_pixel(block_x + x, block_y + y, 255, 255, 255)  # Red color
+
 
 def update_block_position():
     global block_x, block_y
@@ -105,10 +133,11 @@ def update_block_position():
         for y in range(block_size):
             for x in range(block_size):
                 if not block_locations[new_y + y][new_x + x]:
-                    print('marking block location: '+str(new_y + y)+', '+str(new_x + x))
+                    print('marking block location: ' + str(new_y + y) + ', ' + str(new_x + x))
                     block_locations[new_y + y][new_x + x] = True
 
         block_x, block_y = new_x, new_y
+
 
 def main():
     accel.init()
@@ -116,13 +145,20 @@ def main():
     startup_sequence()
     loop_count = 0
     while True:
-        game_loop_once()
+        game_loop()
         loop_count += 1
         if loop_count % 100 == 0:
             log(f"Main loop iteration: {loop_count}")
 
 
-def game_loop_once():
+def game_loop():
+    if game_won:
+        fill(0, 255, 0)
+        return
+    if game_lost:
+        fill(255, 0, 0)
+        return
+
     draw_sparkles()
     update_block_position()
     draw_block()
@@ -136,6 +172,21 @@ def startup_sequence():
     draw_block()
 
 
+def handle_button_press(down: bool, button: str):
+    if down:
+        print('button [' + button + '] pressed, resetting game!')
+        reset()
+
+
+def setup_button_callback():
+    buttons.register(buttons.BTN_A, lambda down: handle_button_press(down, 'A'))
+    buttons.register(buttons.BTN_UP, lambda down: handle_button_press(down, 'UP'))
+    buttons.register(buttons.BTN_DOWN, lambda down: handle_button_press(down, 'DOWN'))
+    buttons.register(buttons.BTN_LEFT, lambda down: handle_button_press(down, 'LEFT'))
+    buttons.register(buttons.BTN_RIGHT, lambda down: handle_button_press(down, 'RIGHT'))
+
+
 if __name__ == "__main__":
     log("Script started")
+    setup_button_callback()
     main()
