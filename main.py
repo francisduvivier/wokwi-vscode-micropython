@@ -23,8 +23,8 @@ game_lost = False
 
 def reset():
     global game_won
-    game_won = False
     global game_lost
+    game_won = False
     game_lost = False
     global block_size
     block_size = 1
@@ -53,6 +53,9 @@ def random_color(max=255):
 
 
 def write_kolab(text_color=(255, 000, 000, 0xff), random_background=False):
+    global game_won
+    global game_lost
+
     message = """
 |IIIIIIIIIIIIIIIIIIIIIIIIIIIIII|
 |                              |
