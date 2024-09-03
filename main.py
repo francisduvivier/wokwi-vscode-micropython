@@ -1,5 +1,4 @@
 # Setup logging
-import sys
 def log(message):
     print(message)
 
@@ -7,7 +6,7 @@ log("Starting up...")
 
 import random
 import time
-from machine import Pin, I2C
+
 import accel
 import rgb
 import buttons
@@ -31,16 +30,16 @@ def set_pixel(x, y, r, g, b):
 
 def fill(r, g, b):
     rgb.background((r, g, b))
-   
+
 def random_color(max=255):
     if random.randint(0,5) != 0:
         return (0,0,0,0)
-    
+
     return (random.randint(0,max), random.randint(0,max), random.randint(0,max), 0xff)
 
 def write_kolab(text_color=(255, 000, 000, 0xff), random_background=False):
     log("Writing KO-LAB...")
-    
+
     message = """
 |IIIIIIIIIIIIIIIIIIIIIIIIIIIIII|
 |                              |
@@ -102,12 +101,12 @@ def update_block_position():
 
         new_x = max(0, min(WIDTH - block_size, block_x + dx))
         new_y = max(0, min(HEIGHT - block_size, block_y + dy))
-        
+
         # Update sparkles
         for y in range(block_size):
             for x in range(block_size):
                 sparkles[new_y + y][new_x + x] = False
-        
+
         block_x, block_y = new_x, new_y
 
 def test_image():
@@ -143,7 +142,7 @@ def main():
         update_block_position()
         draw_block()
         time.sleep(0.1)  # Add a small delay to prevent the loop from running too fast
-        
+
         loop_count += 1
         if loop_count % 100 == 0:
             log(f"Main loop iteration: {loop_count}")
