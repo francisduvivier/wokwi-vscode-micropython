@@ -110,11 +110,8 @@ def update_block_position():
         block_x, block_y = new_x, new_y
 
 def main():
-    log("Entering main function")
-    time.sleep(0.5)
-    fill(50,100,50)
-    write_kolab()
-    time.sleep(0.5)
+    log("[START] main()")
+    startup_sequence()
     loop_count = 0
     while True:
         draw_sparkles()
@@ -125,6 +122,14 @@ def main():
         loop_count += 1
         if loop_count % 100 == 0:
             log(f"Main loop iteration: {loop_count}")
+
+
+def startup_sequence():
+    time.sleep(0.5)
+    fill(50, 100, 50)
+    write_kolab()
+    time.sleep(0.5)
+
 
 if __name__ == "__main__":
     log("Script started")
