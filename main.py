@@ -1,3 +1,6 @@
+DEBUG = True
+from ko_lab_matrix import ko_lab_matrix_animation
+
 def log(message):
     print(message)
 
@@ -173,7 +176,7 @@ def game_lost_loop():
 
 
 def game_won_loop():
-    fill(0, 255, 0)
+    ko_lab_matrix_animation()
 
 
 def startup_sequence():
@@ -189,12 +192,24 @@ def handle_button_press(down: bool, button: str):
         reset()
 
 
+def force_game_won(down):
+    global game_won
+    if DEBUG and down:
+        print('force won!')
+        game_won = True
+
+def force_game_lost(down):
+    global game_lost
+    if DEBUG and down:
+        print('force lost!')
+        game_lost = True
+
 def setup_button_callback():
     buttons.register(buttons.BTN_A, lambda down: handle_button_press(down, 'A'))
     buttons.register(buttons.BTN_UP, lambda down: handle_button_press(down, 'UP'))
     buttons.register(buttons.BTN_DOWN, lambda down: handle_button_press(down, 'DOWN'))
-    buttons.register(buttons.BTN_LEFT, lambda down: handle_button_press(down, 'LEFT'))
-    buttons.register(buttons.BTN_RIGHT, lambda down: handle_button_press(down, 'RIGHT'))
+    buttons.register(buttons.BTN_LEFT, force_game_lost)
+    buttons.register(buttons.BTN_RIGHT, force_game_won)
 
 
 if __name__ == "__main__":
