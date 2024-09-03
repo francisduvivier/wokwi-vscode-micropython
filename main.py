@@ -114,18 +114,20 @@ def main():
     startup_sequence()
     loop_count = 0
     while True:
-        draw_sparkles()
-        update_block_position()
-        draw_block()
-        time.sleep(0.1)  # Add a small delay to prevent the loop from running too fast
-
+        game_loop_once()
         loop_count += 1
         if loop_count % 100 == 0:
             log(f"Main loop iteration: {loop_count}")
 
 
+def game_loop_once():
+    draw_sparkles()
+    update_block_position()
+    draw_block()
+    time.sleep(0.01)  # Add a small delay to prevent the loop from running too fast
+
+
 def startup_sequence():
-    time.sleep(0.5)
     fill(50, 100, 50)
     write_kolab()
     time.sleep(0.5)
